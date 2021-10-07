@@ -1,0 +1,217 @@
+<html>
+    <head>
+        <title>Notenrechner</title>
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <link rel="shortcut icon" href="/favicon.ico">
+        <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+    </head>
+
+    <body>
+        <div class="container">
+
+            <div class="row" >
+                <h1>Notenrechner</h1>
+            </div>
+
+            <div class="row" >
+                <table id="studentList" class="table table-sm col-12 col-md-6">
+                        <thead>
+                            <tr>
+                                <th>Note</th>
+                                <th>Punkte</th>
+                                <th>Punkte</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                        </tbody>
+                </table>
+
+                <div id="input" class="col-12 col-md-6">
+                    Gesamtpunktzahl
+                    <input id="total" type="number" step="0.5" class="form-control" value=100>
+                    Erreichte Punkte
+                    <input id="points" type="number" step="0.5" class="form-control" value=100>
+                    Erreichte Note
+                    <input id="note" type="text" readonly class="form-control">
+                    Erreichte Prozent
+                    <input id="percent" type="text" readonly class="form-control">
+                </div>
+            </div>
+
+            <div class="row mt-5">
+                <h3>Referenztabelle</h3>
+                <button id="btnRefTable" class="btn btn-success" type="button" onclick="toggleRefTable()">
+                        Einblenden
+                </button>
+            </div>
+
+            <div class="row">
+                <table id="referenzList" class="table table-sm col-12 col-md-6">
+                    <thead>
+                        <tr>
+                            <th>Note</th>
+                            <th>Prozent</th>
+                            <th>Prozent</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    </tbody>
+                </table>
+            </div>
+
+
+
+
+        </div>
+
+        <script>
+
+            var noten = {
+                "sehrgutPlus": '1+', "sehrgut": '1', "sehrgutMinus": '1-',
+                "gutPlus": '2+', "gut": '2', "gutMinus": '2-',
+                "befriedigendPlus": '3+', "befriedigend": '3', "befriedigendMinus": '3-',
+                "ausreichendPlus": '4+', "ausreichend": '4', "ausreichendMinus": '4-',
+                "mangelhaftPlus": '5+', "mangelhaft": '5', "mangelhaftMinus": '5-',
+                "ungenuegend": '6'
+            }
+
+            var verteilung = {
+                "sehrgutPlus": [100, 95.5], "sehrgut": [95.5, 91.0], "sehrgutMinus": [91.0, 86.5],
+                "gutPlus": [86.5, 81.8], "gut": [81.8, 77.1], "gutMinus": [77.1, 72.5],
+                "befriedigendPlus": [72.5, 68.1], "befriedigend": [68.1, 63.8], "befriedigendMinus": [63.8, 59.5],
+                "ausreichendPlus":[59.5, 54.8], "ausreichend": [54.8, 51.3], "ausreichendMinus": [51.3, 45.5],
+                "mangelhaftPlus": [45.5, 36.9], "mangelhaft": [36.9, 28.5], "mangelhaftMinus": [28.5, 20.0],
+                "ungenuegend": [20.0, 0.0]
+            }
+
+
+            document.querySelector('#total').addEventListener('change', (e) => {
+                console.log(e.target.value);
+                updateNote();
+
+            });
+
+            document.querySelector('#points').addEventListener('change', (e) => {
+                console.log(e.target.value);
+                updateNote();
+            });
+
+            function updateNote(){
+
+                var points = parseFloat(document.querySelector('#points').value);
+                var total = parseFloat(document.querySelector('#total').value);
+
+                if(points > total){
+                    // alert('Punkte größer als die Gesamtpunktzahl!')
+                    document.querySelector('#points').value = total;
+                    points = total;
+                }
+
+
+                var percent = getPercent(points,total);
+                var note = getNote(percent);
+                console.log("note", note);
+
+                document.querySelector('#note').value = note;
+                document.querySelector('#percent').value = percent.toFixed(1);
+
+                var table = document.querySelector('#studentList');
+                updateTable(table, total);
+            }
+
+            updateNote();
+
+            var refTable = document.querySelector('#referenzList');
+            updateTable(refTable, 100);
+
+            toggleRefTable();
+
+            function updateTable(table, total){
+                var tbody = table.querySelector('tbody');
+                tbody.innerHTML = '';
+
+                var i = 0;
+                for( key in verteilung){
+                    var index = key;
+                    var val = verteilung[key];
+
+                    var temp = document.createElement('template');
+                    if(i == 0)
+                        temp.innerHTML = '<tr><td>' +  noten[index]+ '</td><td>' + (total * val[0]/100).toFixed(1) + '</td><td>' + (total * val[1]/100).toFixed(1) + '</td></tr>';
+                    else
+                        temp.innerHTML = '<tr><td>' +  noten[index]+ '</td><td>' + ((total * val[0]/100).toFixed(1)-0.1).toFixed(1) + '</td><td>' + (total * val[1]/100).toFixed(1) + '</td></tr>';
+
+                    var row = temp.content.childNodes;
+
+                    console.log(row);
+                    tbody.appendChild(row[0]);
+
+                    i++;
+                }
+            }
+
+            function getPercent(points, total){
+                return points/total*100;
+            }
+
+            function getNote(percent){
+                if(percent >= 95.5)
+                    return noten.sehrgutPlus;
+                else if(percent < 95.5 && percent >= 91)
+                    return noten.sehrgut;
+                else if(percent < 91 && percent >= 86.5)
+                    return noten.sehrgutMinus;
+
+                else if(percent < 86.5 && percent >= 81.8)
+                    return noten.gutPlus;
+                else if(percent < 81.8 && percent >= 77.1)
+                    return noten.gut;
+                else if(percent < 77.1 && percent >= 72.5)
+                    return noten.gutMinus;
+
+                else if(percent < 72.5 && percent >= 68.1)
+                    return noten.befriedigendPlus;
+                else if(percent < 68.1 && percent >= 63.8)
+                    return noten.befriedigend;
+                else if(percent < 63.8 && percent >= 59.5)
+                    return noten.befriedigendMinus;
+
+                else if(percent < 59.5 && percent >= 54.8)
+                    return noten.ausreichendPlus;
+                else if(percent < 54.8 && percent >= 51.3)
+                    return noten.ausreichend;
+                else if(percent < 51.3 && percent >= 45.5)
+                    return noten.ausreichendMinus;
+
+                else if(percent < 45.5 && percent >= 36.9)
+                    return noten.mangelhaftPlus;
+                else if(percent < 36.9 && percent >= 28.5)
+                    return noten.mangelhaft;
+                else if(percent < 28.5 && percent >= 20)
+                    return noten.mangelhaftMinus;
+
+                else if(percent < 20)
+                    return noten.ungenuegend;
+                else
+                    alert("Fehler " + percent);
+            }
+
+            function toggleRefTable(){
+
+                var e = document.getElementById('referenzList');
+                var b = document.getElementById('btnRefTable');
+
+                if(e.style.display == 'none'){
+                    e.style.display = 'table';
+                    b.innerHTML = "Ausblenden";
+                }
+                else{
+                    e.style.display = 'none';
+                    b.innerHTML = "Einblenden";
+                }
+
+            }
+
+        </script>
+    </body>
+</html>r
